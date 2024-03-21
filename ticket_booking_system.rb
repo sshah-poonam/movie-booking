@@ -6,12 +6,39 @@ class Movie
     @genre = genre
     @show_timings = show_timings
     @total_seats = total_seats
+    @seats = Array.new(total_seats, false) # false means available seat
+  end
+
+  def available_seats_count
+    @seats.count(false)
+  end
+
+  def reserve_seat(show_time, number_tickets)
+    if !@show_timings.include?(show_time)
+      return "Invalid show time."
+    end
+
+    available_seats = available_seats_count
+
+    if number_tickets > available_seats
+      return "Sorry, only #{available_seats} seat(s) available for #{title} - #{show_time}."
+    end
+
+    booked_seats = []
+    number_tickets.times do
+      seat_index = @seats.index(false)
+      @seats[seat_index] = true # true means booked seat
+      booked_seats << seat_index + 1
+    end
+
+    return "Tickets booked for #{title} - #{show_time}. Seat number(s): #{booked_seats.join(', ')}"
   end
 
   def display_status
     puts "Movie: #{title} (Genre: #{genre})"
     @show_timings.each do |show_time|
-      puts "  Show: #{show_time}, Total Seats: #{@total_seats}"
+      available_seats = available_seats_count
+      puts "  Show: #{show_time}, Total Seats: #{@total_seats}, Available Seats: #{available_seats}"
     end
     puts "-----------------------------------------"
   end
@@ -31,6 +58,21 @@ class TicketBookingSystem
       movie.display_status
     end
   end
+
+  def book_tickets(movie_title, show_time, number_tickets)
+    movie = find_movie(movie_title)
+    if movie
+      return movie.reserve_seat(show_time, number_tickets)
+    else
+      return "Unable to find Movie."
+    end
+  end
+
+  private
+
+  def find_movie(title)
+    @movies.find { |movie| movie.title.downcase == title.downcase }
+  end
 end
 
 # CLI Interface
@@ -43,11 +85,23 @@ loop do
   puts "Welcome to Movie Ticket Booking System"
   puts ""
   puts "1. Display Movie Schedule"
+  puts "2. Book a Ticket"
+  puts "3. Exit"
   choice = gets.chomp.to_i
 
   case choice
   when 1
     ticket_booking.display_movie_status
+  when 2
+    puts "Enter movie title:"
+    movie_title = gets.chomp
+    puts "Enter a showtime to book (e.g. 12:00 PM):"
+    show_time = gets.chomp
+    puts "How many tickets do you want to book?"
+    number_tickets = gets.chomp.to_i
+    puts ticket_booking.book_tickets(movie_title, show_time, number_tickets)
+  when 3
+    puts "Thank you for using Ticket Booking System. Goodbye!"
     break
   else
     puts "Invalid choice. Please try again."
