@@ -88,48 +88,28 @@ class TicketBookingSystem
   end
 
   def book_tickets(movie_title, show_time, number_tickets, user_mobile_number)
+    return "Invalid mobile number." unless valid_mobile_number?(user_mobile_number)
+
     movie = find_movie(movie_title)
-    if movie
-      response = movie.reserve_seat(show_time, number_tickets)
-      if response.is_a?(Hash)
-        user_data_index = @user_data.find_index { |user| user[:mobile_number] == user_mobile_number }
+    return "Unable to find Movie." unless movie
 
-        if user_data_index
-          user_data = @user_data[user_data_index]
-          booked_ticket = user_data[:tickets][response[:title].to_sym]
+    response = movie.reserve_seat(show_time, number_tickets)
+    return response unless response.is_a?(Hash)
 
-          if booked_ticket
-            booked_ticket[response[:show_time].to_sym] = (booked_ticket[response[:show_time].to_sym] || []).concat(response[:booked_seats])
-          else
-            booked_ticket = {
-              "#{response[:show_time]}": response[:booked_seats]
-            }
-          end
-
-          user_data[:tickets][response[:title].to_sym] = (user_data[:tickets][response[:title].to_sym] || {}).merge(booked_ticket)
-          @user_data[user_data_index] = user_data
-        else
-          user_data = { mobile_number: user_mobile_number }
-
-          user_data[:tickets] = {
-            "#{response[:title]}": {
-              "#{response[:show_time]}": response[:booked_seats]
-            }
-          }
-
-          @user_data.push(user_data)
-        end
-
-        return "Tickets booked for #{response[:title]} - #{response[:show_time]}. Seat number(s): #{response[:booked_seats].join(', ')}"
-      else
-        return response
-      end
+    user_data = @user_data.find { |user| user[:mobile_number] == user_mobile_number }
+    if user_data
+      update_user_data(user_data, response)
     else
-      return "Unable to find Movie."
+      create_new_user_data(user_mobile_number, response)
     end
+
+    puts "User Data: #{@user_data}"
+    "Tickets booked for #{response[:title]} - #{response[:show_time]}. Seat number(s): #{response[:booked_seats].join(', ')}"
   end
 
   def cancel_tickets(movie_title, show_time, number_of_tickets, user_mobile_number)
+    return "Invalid mobile number." unless valid_mobile_number?(user_mobile_number)
+
     movie = find_movie(movie_title)
     if movie
 
@@ -172,6 +152,37 @@ class TicketBookingSystem
 
   def find_movie(title)
     @movies.find { |movie| movie.title.downcase == title.downcase }
+  end
+
+  def valid_mobile_number?(user_mobile_number)
+    user_mobile_number.to_s.length == 10 && user_mobile_number.to_s =~ /\A\d+\z/
+  end
+
+  def update_user_data(user_data, response)
+    title = response[:title].to_sym
+    show_time = response[:show_time].to_sym
+    booked_seats = response[:booked_seats]
+
+    user_data[:tickets][title] ||= {}
+    user_data[:tickets][title][show_time] ||= []
+    user_data[:tickets][title][show_time] += booked_seats
+  end
+
+  def create_new_user_data(user_mobile_number, response)
+    title = response[:title].to_sym
+    show_time = response[:show_time].to_sym
+    booked_seats = response[:booked_seats]
+
+    new_user_data = {
+      mobile_number: user_mobile_number,
+      tickets: {
+        title => {
+          show_time => booked_seats
+        }
+      }
+    }
+
+    @user_data.push(new_user_data)
   end
 end
 
