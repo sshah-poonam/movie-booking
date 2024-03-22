@@ -189,7 +189,7 @@ end
 # CLI Interface
 ticket_booking = TicketBookingSystem.new
 
-ticket_booking.add_movie("Mission: Impossible", "Suspense", [{ time: "12:00 PM", total_seat: 15 }, { time: "03:00 PM", total_seat: 15 }, { time: "06:00 PM", total_seat: 15 }])
+ticket_booking.add_movie("Titanic", "Documentary", [{ time: "12:00 PM", total_seat: 15 }, { time: "03:00 PM", total_seat: 15 }, { time: "06:00 PM", total_seat: 15 }])
 ticket_booking.add_movie("Thor", "Action", [{ time: "01:00 PM", total_seat: 15 }, { time: "04:00 PM", total_seat: 15 }, { time: "07:00 PM", total_seat: 15 }])
 
 loop do
