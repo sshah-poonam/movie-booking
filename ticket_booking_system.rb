@@ -1,5 +1,3 @@
-require 'pry'
-
 class Movie
   attr_reader :title, :genre, :show_timings
 
@@ -42,6 +40,34 @@ class Movie
       puts "  Show: #{show_time[:time]}, Total Seats: #{show_time[:total_seat]}, Available Seats: #{available_seats}"
     end
     puts "-----------------------------------------"
+  end
+
+  def cancel_ticket(show_time, number_of_tickets, user_mobile_number)
+    show_time_hash = @show_timings.find { |st| st[:time] == show_time }
+
+    unless show_time_hash
+      return "Invalid show time."
+    end
+
+    seats = show_time_hash[:seats]
+    booked_seats_count = seats.count(true)
+
+    if number_of_tickets > booked_seats_count
+      return "You can only cancel up to #{booked_seats_count} ticket(s) for #{show_time}."
+    end
+
+    canceled_seats = []
+    number_of_tickets.times do
+      canceled_seat_index = seats.index(true)
+      seats[canceled_seat_index] = false
+      canceled_seats << canceled_seat_index + 1
+    end
+
+    show_time_hash[:seats] = seats
+
+    # Make the canceled seats available again
+    available_seats = show_time_hash[:seats].count(false)
+    return { show_time: show_time, canceled_seats: canceled_seats, available_seats: available_seats }
   end
 end
 
@@ -103,6 +129,45 @@ class TicketBookingSystem
     end
   end
 
+  def cancel_tickets(movie_title, show_time, number_of_tickets, user_mobile_number)
+    movie = find_movie(movie_title)
+    if movie
+
+      response = movie.cancel_ticket(show_time, number_of_tickets, user_mobile_number)
+      if response.is_a?(String)
+        return response
+      else
+        user_data_index = @user_data.find_index { |user| user[:mobile_number] == user_mobile_number }
+
+        if user_data_index
+          user_data = @user_data[user_data_index]
+          user_tickets = user_data[:tickets][movie_title.downcase.capitalize.to_sym][show_time.to_sym]
+
+          if user_tickets.nil? || user_tickets.empty?
+            return "No booking found for the given show time and mobile number."
+          elsif user_tickets.length < number_of_tickets
+            return "You can only cancel up to #{user_tickets.length} ticket(s) for #{movie_title} - #{show_time}."
+          else
+            updated_user_tickets = user_tickets - response[:canceled_seats]
+
+            if updated_user_tickets.empty?
+              user_data[:tickets][movie_title.downcase.capitalize.to_sym].delete(show_time.to_sym)
+            else
+              user_data[:tickets][movie_title.downcase.capitalize.to_sym][show_time.to_sym] = updated_user_tickets
+            end
+
+            @user_data[user_data_index] = user_data
+            return "Tickets canceled for #{movie_title} - #{show_time}. Seat number(s): #{response[:canceled_seats].join(', ')}"
+          end
+        else
+          return "No booking found for the given mobile number."
+        end
+      end
+    else
+      return "Unable to find Movie."
+    end
+  end
+
   private
 
   def find_movie(title)
@@ -121,7 +186,8 @@ loop do
   puts ""
   puts "1. Display Movie Schedule"
   puts "2. Book a Ticket"
-  puts "3. Exit"
+  puts "3. Cancel a Ticket"
+  puts "4. Exit"
   choice = gets.chomp.to_i
 
   case choice
@@ -138,6 +204,16 @@ loop do
     user_mobile_number = gets.chomp.to_i
     puts ticket_booking.book_tickets(movie_title, show_time, number_tickets, user_mobile_number)
   when 3
+    puts "Enter movie title:"
+    movie_title = gets.chomp
+    puts "Enter showtime of the ticket (e.g. 12:00 PM):"
+    show_time = gets.chomp
+    puts "How many tickets do you want to cancel?"
+    number_of_tickets = gets.chomp.to_i
+    puts "Enter Mobile number, which you have used to book the ticket"
+    user_mobile_number = gets.chomp.to_i
+    puts ticket_booking.cancel_tickets(movie_title, show_time, number_of_tickets, user_mobile_number)
+  when 4
     puts "Thank you for using Ticket Booking System. Goodbye!"
     break
   else
