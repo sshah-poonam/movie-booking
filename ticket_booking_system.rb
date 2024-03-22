@@ -103,7 +103,7 @@ class TicketBookingSystem
       create_new_user_data(user_mobile_number, response)
     end
 
-    puts "User Data: #{@user_data}"
+    # puts "User Data: #{@user_data}"
     "Tickets booked for #{response[:title]} - #{response[:show_time]}. Seat number(s): #{response[:booked_seats].join(', ')}"
   end
 
