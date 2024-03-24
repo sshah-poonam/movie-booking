@@ -42,7 +42,7 @@ class Movie
     puts "-----------------------------------------"
   end
 
-  def cancel_ticket(show_time, number_of_tickets, user_mobile_number)
+  def cancel_ticket(show_time, number_of_tickets)
     show_time_hash = @show_timings.find { |st| st[:time] == show_time }
 
     unless show_time_hash
@@ -96,14 +96,13 @@ class TicketBookingSystem
     response = movie.reserve_seat(show_time, number_tickets)
     return response unless response.is_a?(Hash)
 
-    user_data = @user_data.find { |user| user[:mobile_number] == user_mobile_number }
-    if user_data
-      update_user_data(user_data, response)
+    user_data_index = find_user_data_index(user_mobile_number)
+    if user_data_index
+      update_user_data(user_data_index, response)
     else
       create_new_user_data(user_mobile_number, response)
     end
 
-    # puts "User Data: #{@user_data}"
     "Tickets booked for #{response[:title]} - #{response[:show_time]}. Seat number(s): #{response[:booked_seats].join(', ')}"
   end
 
@@ -111,41 +110,23 @@ class TicketBookingSystem
     return "Invalid mobile number." unless valid_mobile_number?(user_mobile_number)
 
     movie = find_movie(movie_title)
-    if movie
+    return "Unable to find Movie." unless movie
 
-      response = movie.cancel_ticket(show_time, number_of_tickets, user_mobile_number)
-      if response.is_a?(String)
-        return response
-      else
-        user_data_index = @user_data.find_index { |user| user[:mobile_number] == user_mobile_number }
+    user_data_index = find_user_data_index(user_mobile_number)
+    return "No booking found for the given mobile number." unless user_data_index
 
-        if user_data_index
-          user_data = @user_data[user_data_index]
-          user_tickets = user_data[:tickets][movie_title.downcase.capitalize.to_sym][show_time.to_sym]
+    response = movie.cancel_ticket(show_time, number_of_tickets)
+    return response unless response.is_a?(Hash)
 
-          if user_tickets.nil? || user_tickets.empty?
-            return "No booking found for the given show time and mobile number."
-          elsif user_tickets.length < number_of_tickets
-            return "You can only cancel up to #{user_tickets.length} ticket(s) for #{movie_title} - #{show_time}."
-          else
-            updated_user_tickets = user_tickets - response[:canceled_seats]
+    user_data = @user_data[user_data_index]
+    user_tickets = get_user_tickets(user_data, movie_title, show_time)
 
-            if updated_user_tickets.empty?
-              user_data[:tickets][movie_title.downcase.capitalize.to_sym].delete(show_time.to_sym)
-            else
-              user_data[:tickets][movie_title.downcase.capitalize.to_sym][show_time.to_sym] = updated_user_tickets
-            end
+    return "No booking found for the given show time and mobile number." if user_tickets.nil? || user_tickets.empty?
+    return "You can only cancel up to #{user_tickets.length} ticket(s) for #{movie_title} - #{show_time}." if user_tickets.length < number_of_tickets
 
-            @user_data[user_data_index] = user_data
-            return "Tickets canceled for #{movie_title} - #{show_time}. Seat number(s): #{response[:canceled_seats].join(', ')}"
-          end
-        else
-          return "No booking found for the given mobile number."
-        end
-      end
-    else
-      return "Unable to find Movie."
-    end
+    update_user_tickets(user_data_index, user_data, movie_title, show_time, response[:canceled_seats], user_tickets)
+
+    return "Tickets canceled for #{movie_title} - #{show_time}. Seat number(s): #{response[:canceled_seats].join(', ')}"
   end
 
   private
@@ -158,7 +139,12 @@ class TicketBookingSystem
     user_mobile_number.to_s.length == 10 && user_mobile_number.to_s =~ /\A\d+\z/
   end
 
-  def update_user_data(user_data, response)
+  def find_user_data_index(user_mobile_number)
+    @user_data.find_index { |user| user[:mobile_number] == user_mobile_number }
+  end
+
+  def update_user_data(user_data_index, response)
+    user_data = @user_data[user_data_index]
     title = response[:title].to_sym
     show_time = response[:show_time].to_sym
     booked_seats = response[:booked_seats]
@@ -183,6 +169,22 @@ class TicketBookingSystem
     }
 
     @user_data.push(new_user_data)
+  end
+
+  def get_user_tickets(user_data, movie_title, show_time)
+    user_data[:tickets][movie_title.downcase.capitalize.to_sym][show_time.to_sym]
+  end
+
+  def update_user_tickets(user_data_index, user_data, movie_title, show_time, canceled_seats, user_tickets)
+    updated_user_tickets = user_tickets - canceled_seats
+
+    if updated_user_tickets.empty?
+      user_data[:tickets][movie_title.downcase.capitalize.to_sym].delete(show_time.to_sym)
+    else
+      user_data[:tickets][movie_title.downcase.capitalize.to_sym][show_time.to_sym] = updated_user_tickets
+    end
+
+    @user_data[user_data_index] = user_data
   end
 end
 
