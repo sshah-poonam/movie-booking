@@ -21,12 +21,11 @@ class Movie
     # If total seats are booked for the applied show,
     # then display other shows where we have availability of seats
     show_timings_array = []
-
     if available_seats == 0
       show_time_value = nil
       @show_timings.each do |show_time1|
         if show_time1[:seats].count(false) > number_tickets
-          show_timings_array << show_time1[:time]
+          show_timings_array << "#{show_time1[:time]} (#{show_time1[:seats].count(false)} seats available)"
           # show_time_value = show_time1[:time] # Display only one show
           # break
         end
