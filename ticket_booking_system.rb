@@ -103,6 +103,7 @@ class TicketBookingSystem
       create_new_user_data(user_mobile_number, response)
     end
 
+    puts "#{@user_data}"
     "Tickets booked for #{response[:title]} - #{response[:show_time]}. Seat number(s): #{response[:booked_seats].join(', ')}"
   end
 
@@ -126,7 +127,28 @@ class TicketBookingSystem
 
     update_user_tickets(user_data_index, user_data, movie_title, show_time, response[:canceled_seats], user_tickets)
 
+
+    puts "#{@user_data}"
     return "Tickets canceled for #{movie_title} - #{show_time}. Seat number(s): #{response[:canceled_seats].join(', ')}"
+  end
+
+
+  # movie's max booking
+  def max_bookings_for_show
+    booking_hash = {"Avenger": {"4PM": 5, "12PM": 2}, "Titanic": {"9PM": 10, "2PM": 2}}
+
+    max = 0
+    max_hash = {}
+    booking_hash.each do |key, value|
+      value.each do |key1, value1|
+        if value1 > max
+          max = value1
+          max_hash = { movie_name: key, time: key1, bookings: value}
+        end
+      end
+    end
+
+    puts "Max Booking Show: #{max_hash}"
   end
 
   private
@@ -200,7 +222,9 @@ loop do
   puts "1. Display Movie Schedule"
   puts "2. Book a Ticket"
   puts "3. Cancel a Ticket"
-  puts "4. Exit"
+  puts "4. Add Movie"
+  puts "5. Max Booking"
+  puts "6. Exit"
   choice = gets.chomp.to_i
 
   case choice
@@ -227,6 +251,22 @@ loop do
     user_mobile_number = gets.chomp.to_i
     puts ticket_booking.cancel_tickets(movie_title, show_time, number_of_tickets, user_mobile_number)
   when 4
+    puts "Enter movie title:"
+    movie_title = gets.chomp
+    puts "Enter Genre: "
+    genre = gets.chomp
+    puts "Enter showtimes for Movie"
+    show_time = gets.chomp
+    puts "Enter total seats"
+    total_seat = gets.chomp.to_i
+
+    movie_show_seats = [{time: show_time, total_seat: total_seat}]
+    ticket_booking.add_movie(movie_title, genre, movie_show_seats)
+
+    # ticket_booking.add_movie("Thor", "Action", [{ time: "01:00 PM", total_seat: 15 }, { time: "04:00 PM", total_seat: 15 }, { time: "07:00 PM", total_seat: 15 }])
+  when 5
+    ticket_booking.max_bookings_for_show
+  when 6
     puts "Thank you for using Ticket Booking System. Goodbye!"
     break
   else
