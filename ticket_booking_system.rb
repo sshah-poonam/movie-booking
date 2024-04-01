@@ -44,16 +44,16 @@ class Movie
     end
 
     booked_seats = []
-    seats = show_time_hash[:seats]
+    seats = show_time_hash[:seats].reverse # Reverse the seats array
 
     number_tickets.times do
-      seat_index = seats.index(false)
+      seat_index = seats.rindex(false) # find last available seat
       seats[seat_index] = true # true means booked seat
       booked_seats << seat_index + 1
     end
 
-    show_time_hash[:seats] = seats
-    return {title: title, show_time: show_time, booked_seats: booked_seats}
+    show_time_hash[:seats] = seats.reverse # Reversing back show_time_hash
+    return { title: title, show_time: show_time, booked_seats: booked_seats }
   end
 
   def display_status
