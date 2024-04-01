@@ -151,23 +151,23 @@ class TicketBookingSystem
     puts "Max Booking Show: #{max_hash}"
   end
 
-  # With static data
-  # def max_bookings_for_show
-  #   booking_hash = {"Avenger": {"4PM": 5, "12PM": 2}, "Titanic": {"9PM": 10, "2PM": 2}}
+  # Movie's Max booking using static data
+  def max_bookings_for_show_static
+    booking_hash = {"Avenger": {"4PM": 5, "12PM": 2}, "Titanic": {"9PM": 10, "2PM": 2}}
 
-  #   max = 0
-  #   max_hash = {}
-  #   booking_hash.each do |key, value|
-  #     value.each do |key1, value1|
-  #       if value1 > max
-  #         max = value1
-  #         max_hash = { movie_name: key, time: key1, bookings: value}
-  #       end
-  #     end
-  #   end
+    max = 0
+    max_hash = {}
+    booking_hash.each do |key, value|
+      value.each do |key1, value1|
+        if value1 > max
+          max = value1
+          max_hash = { movie_name: key, time: key1, bookings: value}
+        end
+      end
+    end
 
-  #   puts "Max Booking Show: #{max_hash}"
-  # end
+    puts "Max Booking Show: #{max_hash}"
+  end
 
   private
 
