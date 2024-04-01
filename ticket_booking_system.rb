@@ -133,23 +133,41 @@ class TicketBookingSystem
   end
 
 
-  # movie's max booking
+  # Dynamic movie's max booking
   def max_bookings_for_show
-    booking_hash = {"Avenger": {"4PM": 5, "12PM": 2}, "Titanic": {"9PM": 10, "2PM": 2}}
-
     max = 0
     max_hash = {}
-    booking_hash.each do |key, value|
-      value.each do |key1, value1|
-        if value1 > max
-          max = value1
-          max_hash = { movie_name: key, time: key1, bookings: value}
+
+    @movies.each do |movie|
+      movie.show_timings.each do |show|
+        value = show[:total_seat] - show[:seats].count(false)
+        if value > max
+          max = value
+          max_hash = { movie_title: movie.title, show_time: show[:time], bookings: max }
         end
       end
     end
 
     puts "Max Booking Show: #{max_hash}"
   end
+
+  # With static data
+  # def max_bookings_for_show
+  #   booking_hash = {"Avenger": {"4PM": 5, "12PM": 2}, "Titanic": {"9PM": 10, "2PM": 2}}
+
+  #   max = 0
+  #   max_hash = {}
+  #   booking_hash.each do |key, value|
+  #     value.each do |key1, value1|
+  #       if value1 > max
+  #         max = value1
+  #         max_hash = { movie_name: key, time: key1, bookings: value}
+  #       end
+  #     end
+  #   end
+
+  #   puts "Max Booking Show: #{max_hash}"
+  # end
 
   private
 
