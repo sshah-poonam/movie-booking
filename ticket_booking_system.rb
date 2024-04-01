@@ -240,7 +240,7 @@ loop do
   puts "1. Display Movie Schedule"
   puts "2. Book a Ticket"
   puts "3. Cancel a Ticket"
-  puts "4. Add Movie"
+  puts "4. Add Movie Details and Show Timings"
   puts "5. Max Booking"
   puts "6. Exit"
   choice = gets.chomp.to_i
@@ -273,15 +273,21 @@ loop do
     movie_title = gets.chomp
     puts "Enter Genre: "
     genre = gets.chomp
-    puts "Enter showtimes for Movie"
-    show_time = gets.chomp
-    puts "Enter total seats"
-    total_seat = gets.chomp.to_i
+    puts "Enter number of show times for Movie (e.g. 3): "
+    show_times = gets.chomp.to_i
 
-    movie_show_seats = [{time: show_time, total_seat: total_seat}]
+    movie_show_seats = []
+    show_times.times do |i|
+      puts "Enter showtime #{i + 1} details:"
+      puts "Time (e.g., 12:00 PM):"
+      show_time = gets.chomp
+      puts "Total seats:"
+      total_seat = gets.chomp.to_i
+
+      movie_show_seats << { time: show_time, total_seat: total_seat }
+    end
+
     ticket_booking.add_movie(movie_title, genre, movie_show_seats)
-
-    # ticket_booking.add_movie("Thor", "Action", [{ time: "01:00 PM", total_seat: 15 }, { time: "04:00 PM", total_seat: 15 }, { time: "07:00 PM", total_seat: 15 }])
   when 5
     ticket_booking.max_bookings_for_show
   when 6
