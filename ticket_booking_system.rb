@@ -1,3 +1,5 @@
+require 'pry'
+
 class Movie
   attr_reader :title, :genre, :show_timings
 
@@ -15,6 +17,28 @@ class Movie
     end
 
     available_seats = show_time_hash[:seats].count(false)
+
+    # If total seats are booked for the applied show,
+    # then display other shows where we have availability of seats
+    show_timings_array = []
+
+    if available_seats == 0
+      show_time_value = nil
+      @show_timings.each do |show_time1|
+        if show_time1[:seats].count(false) > number_tickets
+          show_timings_array << show_time1[:time]
+          # show_time_value = show_time1[:time] # Display only one show
+          # break
+        end
+      end
+      # puts "#{show_time} is full, Please try to book these show_time #{show_time_value}" # Display one show
+
+      if show_timings_array.empty?
+        puts "All the show times are fully booked for this #{title} movie. Please check tomorrow."
+      else
+        puts "#{show_time} show is full, Please try to book these show_times #{show_timings_array.join(" OR ")}"
+      end
+    end
 
     if number_tickets > available_seats
       return "Sorry, only #{available_seats} seat(s) available for #{title} - #{show_time}."
